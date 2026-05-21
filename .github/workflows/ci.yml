@@ -1,0 +1,62 @@
+name: E-Commerce Backend QA Demo
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+
+  qa-tests:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+
+      - name: Install Dependencies
+        run: |
+
+          python -m pip install --upgrade pip
+
+          pip install -r requirements.txt
+
+
+      - name: Run Backend Tests
+        run: |
+
+          pytest tests/ \
+          --junitxml=junit.xml
+
+        continue-on-error: true
+
+
+      - name: Analyze Failures Using AI Agent
+        if: always()
+
+        uses: Syeda-Sahar/intelligent-ci-log-clustering-agent@v1.0.0
+
+        with:
+
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+          pr_number: ${{ github.event.pull_request.number }}
+
+          report-path: "junit.xml"
+
+          max-clusters: 8
